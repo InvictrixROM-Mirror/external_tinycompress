@@ -107,7 +107,7 @@ static int oops(struct compress *compress, int e, const char *fmt, ...)
 		": %s", strerror(e));
 	errno = e;
 
-	return -1;
+	return -errno;
 }
 
 const char *compress_get_error(struct compress *compress)
@@ -573,6 +573,7 @@ int compress_set_gapless_metadata(struct compress *compress,
 }
 
 #ifdef USE_VENDOR_EXTN
+#if defined(SNDRV_COMPRESS_SET_NEXT_TRACK_PARAM)
 int compress_set_next_track_param(struct compress *compress,
 	union snd_codec_options *codec_options)
 {
@@ -583,6 +584,13 @@ int compress_set_next_track_param(struct compress *compress,
 		return oops(compress, errno, "cannot set next track params\n");
 	return 0;
 }
+#else
+int compress_set_next_track_param(struct compress *compress __unused,
+	union snd_codec_options *codec_options __unused)
+{
+	return 0;
+}
+#endif
 #endif
 
 bool is_codec_supported(unsigned int card, unsigned int device,
@@ -643,6 +651,7 @@ int compress_wait(struct compress *compress, int timeout_ms)
 	return oops(compress, EIO, "poll signalled unhandled event");
 }
 
+#ifdef USE_VENDOR_EXTN
 int compress_get_metadata(struct compress *compress,
 		struct snd_compr_metadata *mdata) {
 	int version;
@@ -675,3 +684,4 @@ int compress_set_metadata(struct compress *compress,
 	}
 	return 0;
 }
+#endif
